@@ -83,7 +83,7 @@ export default function Theme() {
 
   return (
     <div className="dark:bg-stone-950 transition-colors">
-      <header className="relative top-0 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800 rounded-2xl">
+      <header className="relative top-0 backdrop-blur supports-[backdrop-filter]:bg-teal-200/30 dark:supports-[backdrop-filter]:bg-zinc-950/60 border-b border-zinc-200 dark:border-zinc-800 rounded-2xl">
         {isSmallScreen ? (
           <motion.div {...motionProps}>
             <ThemeSelect theme={theme} onChange={setTheme} />

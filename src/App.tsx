@@ -2,7 +2,8 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BrowserRouter, useLocation, useRoutes } from "react-router-dom";
 import { Helmet, HelmetProvider } from "react-helmet-async";
-
+import { AuthProvider } from "./context/AuthContext";
+import MyProfile from "./pages/MyProfile";
 // Lazy imports
 const Home = React.lazy(() => import("./pages/Home"));
 const RootLayout = React.lazy(() => import("./layouts/RootLayout"));
@@ -80,6 +81,14 @@ const AnimatedRouter = () => {
           ),
           path: "login",
         },
+        {
+          element: (
+            <PageWraper>
+              <MyProfile />
+            </PageWraper>
+          ),
+          path: "myprofile",
+        },
       ],
     },
   ]);
@@ -121,7 +130,9 @@ const App = () => {
       </Helmet>
 
       <BrowserRouter>
-        <AnimatedRouter />
+        <AuthProvider>
+          <AnimatedRouter />
+        </AuthProvider>
       </BrowserRouter>
     </HelmetProvider>
   );

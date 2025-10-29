@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Theme from "../components/themeSwitcher";
 import { useSelector } from "react-redux";
@@ -8,6 +8,9 @@ import type { RootState } from "@/app/store/store";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  );
   const [isOpen, setIsOpen] = useState(false);
   const cartCount = useSelector((state: RootState) =>
     state.cart.cart.reduce((total, item) => total + item.quantity, 0)
@@ -15,7 +18,7 @@ export default function Navbar() {
 
   const menuVariants = {
     closed: { opacity: 0, height: 0, transition: { duration: 0.3 } },
-    open: { opacity: 1, height: 225, transition: { duration: 0.2 } },
+    open: { opacity: 1, height: 275, transition: { duration: 0.2 } },
   };
 
   const lineVariants = {
@@ -29,7 +32,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="flex justify-between items-center px-6 py-4 shadow-md bg-white dark:bg-stone-950 dark:text-white caret-transparent relative z-50">
+    <nav className="flex justify-between items-center px-6 py-4 shadow-md bg-white dark:bg-stone-950 dark:text-white caret-transparent relative border-b-2  border-blue-900 z-50">
       {/* Logo */}
       <NavLink to={"/"}>
         <h1 className="text-xl font-bold">Mini Shop</h1>
@@ -59,6 +62,23 @@ export default function Navbar() {
         <NavLink to={"contact"}>
           <Button variant="navbutton">Kontakt</Button>
         </NavLink>
+        {isAuthenticated ? (
+          <NavLink to={"myprofile"}>
+            {" "}
+            <Button variant="navbutton" className="flex items-center gap-1">
+              <User className="h-4 w-4" />
+              My profile
+            </Button>
+          </NavLink>
+        ) : (
+          <NavLink to={"login"}>
+            {" "}
+            <Button variant="navbutton" className="flex items-center gap-1">
+              <User className="h-4 w-4" /> Login
+            </Button>
+          </NavLink>
+        )}
+
         <NavLink to={"cart"}>
           <Button variant="outline" className="dark:text-white relative">
             <ShoppingCart className="mr-2 h-4 w-4" /> Koszyk
@@ -72,7 +92,7 @@ export default function Navbar() {
               {cartCount > 0 ? cartCount : ""}
             </span>
           </Button>
-        </NavLink>{" "}
+        </NavLink>
         <Theme />
       </div>
 
@@ -84,7 +104,7 @@ export default function Navbar() {
             animate="open"
             exit="closed"
             variants={menuVariants}
-            className="absolute top-16 left-0 w-full bg-white dark:bg-stone-950 shadow-md flex flex-col gap-4 dark:text-white p-4 md:hidden"
+            className="absolute top-16 left-0 w-full bg-white dark:bg-stone-900 shadow-md flex flex-col gap-4 dark:text-white p-4 md:hidden"
           >
             <NavLink to={"products"} onClick={() => setIsOpen(false)}>
               <Button variant="navbutton" className="w-full">
@@ -94,6 +114,14 @@ export default function Navbar() {
             <NavLink to={"contact"} onClick={() => setIsOpen(false)}>
               <Button variant="navbutton" className="w-full">
                 Kontakt
+              </Button>
+            </NavLink>
+            <NavLink to={"myprofile"} onClick={() => setIsOpen(false)}>
+              <Button
+                variant="navbutton"
+                className="w-full flex items-center gap-1"
+              >
+                <User className="h-4 w-4" /> MyProfile
               </Button>
             </NavLink>
             <NavLink to={"cart"} onClick={() => setIsOpen(false)}>

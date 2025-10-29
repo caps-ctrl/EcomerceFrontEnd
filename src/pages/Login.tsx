@@ -6,7 +6,14 @@ import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import axios from "axios";
+
+// Redux
+import { useDispatch } from "react-redux";
+import { login } from "@/features/Auth/authSlice";
+
 // --- Schema walidacji ---
 const loginSchema = z.object({
   email: z
@@ -19,17 +26,30 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
+  const [message, setMessage] = useState<string>("");
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = (data: LoginForm) => {
-    console.log("Logowanie...", data);
-    alert(`Zalogowano jako ${data.email}`);
+  const onSubmit = async (data: LoginForm) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/users/login",
+        data
+      );
+
+      // zapis tokenu i ustawienie stanu w Redux
+      dispatch(login(res.data.token));
+
+      setMessage("Zalogowano pomyślnie!");
+      setTimeout(() => navigate("/"), 1000);
+    } catch (err: any) {
+      setMessage(err.response?.data?.error || "Błąd logowania");
+    }
   };
 
   return (
@@ -63,14 +83,20 @@ export default function Login() {
                   </FormItem>
                 )}
               />
-
               <Button type="submit" className="w-full">
                 Zaloguj się
               </Button>
-              <div className="flex justify-center text-gray-500">
-                <p className="cursor-pointer hover:underline">
-                  <NavLink to={"/register"}>Nie masz konta?</NavLink>
+
+              {message && (
+                <p className="text-center text-sm text-gray-600 mt-2">
+                  {message}
                 </p>
+              )}
+
+              <div className="flex justify-center text-gray-500">
+                <NavLink to="/register" className="hover:underline">
+                  Nie masz konta?
+                </NavLink>
               </div>
             </form>
           </Form>

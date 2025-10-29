@@ -1,18 +1,23 @@
-// src/pages/Register.tsx
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-
+import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useState } from "react";
+
+// Redux
+import { useDispatch } from "react-redux";
+import { login } from "@/features/Auth/authSlice";
 
 // --- SCHEMA WALIDACJI (zod) ---
 const registerSchema = z
   .object({
+    name: z.string().min(2, "Imię jest za krótkie"),
     email: z.string().email("Podaj poprawny adres email"),
     password: z.string().min(6, "Hasło musi mieć co najmniej 6 znaków"),
     confirmPassword: z.string(),
@@ -25,19 +30,42 @@ const registerSchema = z
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function Register() {
+  const navigate = useNavigate();
+  const [message, setMessage] = useState<string>("");
+  const dispatch = useDispatch();
+
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
     },
   });
 
-  function onSubmit(values: RegisterFormValues) {
-    console.log("Dane rejestracji:", values);
-    alert(`Konto utworzone dla: ${values.email} ✅ (symulacja)`);
-  }
+  const onSubmit = async (values: RegisterFormValues) => {
+    try {
+      // rejestracja
+      const res = await axios.post("http://localhost:5000/api/users/register", {
+        name: values.name,
+        email: values.email,
+        password: values.password,
+      });
+
+      // backend zwraca token po rejestracji
+      if (res.data.token) {
+        dispatch(login(res.data.token));
+        setMessage("Rejestracja udana! Zalogowano pomyślnie.");
+        setTimeout(() => navigate("/"), 1000);
+      } else {
+        setMessage("Rejestracja udana! Możesz się zalogować.");
+        setTimeout(() => navigate("/login"), 1000);
+      }
+    } catch (err: any) {
+      setMessage(err.response?.data?.error || "Błąd rejestracji");
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -48,7 +76,18 @@ export default function Register() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* Email */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Imię</Label>
+                    <Input placeholder="Twoje imię" {...field} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="email"
@@ -61,7 +100,6 @@ export default function Register() {
                 )}
               />
 
-              {/* Hasło */}
               <FormField
                 control={form.control}
                 name="password"
@@ -74,7 +112,6 @@ export default function Register() {
                 )}
               />
 
-              {/* Powtórz hasło */}
               <FormField
                 control={form.control}
                 name="confirmPassword"
@@ -90,10 +127,20 @@ export default function Register() {
               <Button type="submit" className="w-full">
                 Zarejestruj się
               </Button>
-              <div className="flex justify-center text-gray-500">
-                <p className="cursor-pointer hover:underline">
-                  <NavLink to={"/login"}>Masz juz konto?</NavLink>
+
+              {message && (
+                <p className="text-center text-sm text-gray-600 mt-2">
+                  {message}
                 </p>
+              )}
+
+              <div className="flex justify-center text-gray-500 mt-2">
+                <NavLink
+                  to="/login"
+                  className="hover:underline text-blue-600 font-medium"
+                >
+                  Masz już konto?
+                </NavLink>
               </div>
             </form>
           </Form>

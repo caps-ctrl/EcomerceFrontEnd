@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import ProductCard from "@/components/ui/ProductCard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,30 +15,40 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useSelector } from "react-redux";
-
 import type { RootState } from "../app/store/store";
-
-// --- POMOCNICZE ---
+import { fetchProducts } from "@/features/products/productsSlice";
+import type { AppDispatch } from "../app/store/store";
+// --- Stałe i typy ---
 const CATEGORIES = ["Audio", "Phone", "Laptop", "Accessory"] as const;
-type CategoryFilter = Partial<Record<(typeof CATEGORIES)[number], boolean>>;
+type Category = (typeof CATEGORIES)[number];
+type CategoryFilter = Partial<Record<Category, boolean>>;
 type SortKey = "relevance" | "price_asc" | "price_desc" | "rating_desc";
 
-// --- KOMPONENT STRONY ---
 export default function Products() {
+  const dispatch = useDispatch<AppDispatch>();
   const ALL_PRODUCTS = useSelector(
     (state: RootState) => state.products.products
   );
-  // UI state
+  const status = useSelector((state: RootState) => state.products.status);
+
+  //Wywolanie pobrania produktow
+
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchProducts());
+    }
+  }, [dispatch, status]);
+
+  // --- Stany UI ---
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("relevance");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 11000]);
   const [categories, setCategories] = useState<CategoryFilter>({});
-
   const [page, setPage] = useState(1);
+
   const PAGE_SIZE = 8;
 
-  // Filtrowanie + sortowanie
+  // --- Filtrowanie + sortowanie ---
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return ALL_PRODUCTS.filter(
@@ -57,22 +68,22 @@ export default function Products() {
         case "rating_desc":
           return b.rating - a.rating;
         default:
-          return 0; // relevance (brak zmian)
+          return 0;
       }
     });
-  }, [query, sort, priceRange, categories]);
+  }, [query, sort, priceRange, categories, ALL_PRODUCTS]);
 
-  // Paginacja
+  // --- Paginacja ---
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPageItems = filtered.slice(
     (page - 1) * PAGE_SIZE,
     page * PAGE_SIZE
   );
 
-  // Reset paginacji przy zmianie filtrów
+  // --- Handlery ---
   const onFiltersChange = () => setPage(1);
 
-  const toggleCategory = (key: (typeof CATEGORIES)[number]) => {
+  const toggleCategory = (key: Category) => {
     setCategories((prev) => {
       const next = { ...prev, [key]: !prev[key] };
       onFiltersChange();
@@ -88,13 +99,14 @@ export default function Products() {
     setPage(1);
   };
 
+  // --- Render ---
   return (
-    <div className="mx-auto max-w-7xl p-6 dark:bg-stone-950 dark:text-white caret-transparent">
+    <div className="mx-auto max-w-7xl p-6 dark:bg-stone-950 dark:text-white">
       <h1 className="mb-6 text-3xl font-bold">🛍️ Produkty</h1>
 
-      {/* Pasek narzędzi: wyszukiwarka + sort */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-3 ">
-        <div className="sm:col-span-2 dark:caret-white  caret-black">
+      {/* 🔎 Pasek narzędzi: wyszukiwarka + sortowanie */}
+      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+        <div className="sm:col-span-2">
           <Label htmlFor="search" className="p-2">
             Wyszukaj
           </Label>
@@ -131,7 +143,7 @@ export default function Products() {
         </div>
       </div>
 
-      {/* Layout: sidebar z filtrami + siatka produktów */}
+      {/* 🧱 Layout: sidebar + produkty */}
       <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
         {/* Sidebar filtrów */}
         <aside className="space-y-6 rounded-2xl border p-4">
@@ -153,9 +165,9 @@ export default function Products() {
           <div>
             <h3 className="mb-4 text-sm font-medium">Cena (PLN)</h3>
             <Slider
-              value={[priceRange[0], priceRange[1]]}
+              value={priceRange}
               onValueChange={(v) => {
-                setPriceRange([v[0], v[1]] as [number, number]);
+                setPriceRange(v as [number, number]);
                 onFiltersChange();
               }}
               min={0}
@@ -173,9 +185,17 @@ export default function Products() {
           </Button>
         </aside>
 
-        {/* Siatka produktów */}
+        {/* 🛒 Siatka produktów */}
         <section>
-          {currentPageItems.length === 0 ? (
+          {status === "loading" ? (
+            <p className="text-center text-sm text-muted-foreground py-10">
+              Ładowanie produktów...
+            </p>
+          ) : status === "failed" ? (
+            <p className="text-center text-sm text-red-500 py-10">
+              Błąd ładowania produktów ❌
+            </p>
+          ) : currentPageItems.length === 0 ? (
             <p className="rounded-xl border p-6 text-center text-sm text-muted-foreground">
               Brak wyników dla podanych filtrów.
             </p>
@@ -197,26 +217,28 @@ export default function Products() {
             </div>
           )}
 
-          {/* Paginacja */}
-          <div className="mt-8 flex items-center justify-center gap-2">
-            <Button
-              variant="outline"
-              disabled={page === 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              Poprzednia
-            </Button>
-            <span className="px-3 text-sm text-muted-foreground">
-              Strona {page} / {pageCount}
-            </span>
-            <Button
-              variant="outline"
-              disabled={page === pageCount}
-              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-            >
-              Następna
-            </Button>
-          </div>
+          {/* 🔄 Paginacja */}
+          {filtered.length > 0 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                disabled={page === 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Poprzednia
+              </Button>
+              <span className="px-3 text-sm text-muted-foreground">
+                Strona {page} / {pageCount}
+              </span>
+              <Button
+                variant="outline"
+                disabled={page === pageCount}
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              >
+                Następna
+              </Button>
+            </div>
+          )}
         </section>
       </div>
     </div>

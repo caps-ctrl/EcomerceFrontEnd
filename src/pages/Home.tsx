@@ -1,24 +1,38 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-
-import ProductCard from "../components/ui/ProductCard";
+import type { AppDispatch } from "@/app/store/store";
+import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/app/store/store";
 import { createSelector } from "@reduxjs/toolkit";
+import { LogoLoop } from "../components/LogoLoop";
+import { fetchProducts } from "@/features/products/productsSlice";
 
 export default function Home() {
-  const selectProductsWithTags = createSelector(
+  const dispatch = useDispatch<AppDispatch>();
+  const selectImportantProducts = createSelector(
     (state: RootState) => state.products.products,
-    (products) => products.filter((p) => p.tags && p.tags.length > 0)
+    (products) => products.filter((p) => p.rating > 4.3)
   );
+  const status = useSelector((state: RootState) => state.products.status);
+  const importantProducts = useSelector(selectImportantProducts);
+  const logo = importantProducts.map((p) => ({
+    src: p.image,
+    alt: p.name,
+    title: p.name,
+  }));
 
-  const data = useSelector(selectProductsWithTags);
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchProducts());
+    }
+  }, [dispatch, status]);
 
   return (
     <div className="min-h-screen flex flex-col caret-transparent dark:bg-stone-950">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white">
+      <section className=" dark:text-white">
         <div className="container mx-auto px-6 py-20 text-center">
           <motion.h1
             initial={{ opacity: 0, y: -30 }}
@@ -26,7 +40,7 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="text-4xl md:text-6xl font-bold mb-4"
           >
-            Witamy w <span className="text-yellow-300">Mini Shop</span>
+            Witamy w <span className="text-blue-500 ">Mini Shop</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -39,7 +53,7 @@ export default function Home() {
           <NavLink to={"/products"}>
             <Button
               size="lg"
-              className="bg-yellow-400 text-black hover:bg-yellow-500"
+              className="bg-blue-900 text-white hover:bg-blue-500"
             >
               Zobacz ofertę
             </Button>
@@ -48,22 +62,40 @@ export default function Home() {
       </section>
 
       {/* Products */}
-      <section className="container mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold text-center mb-10">
-          Popularne produkty
-        </h2>
-        <div className="grid gap-8 md:grid-cols-3">
-          {data.map((product) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
+      <section className="container mx-auto px-6 ">
+        {/*Important Products*/}
+        <section>
+          <h2 className="text-3xl dark:text-white font-bold text-center mb-10">
+            Popularne produkty
+          </h2>
+
+          {status === "loading" ? (
+            <p>Loading Products...</p>
+          ) : status === "failed" ? (
+            <p>Loading Failed</p>
+          ) : (
+            <div
+              style={{
+                height: "350px",
+                position: "relative",
+                overflow: "hidden",
+              }}
             >
-              <ProductCard {...product} />
-            </motion.div>
-          ))}
-        </div>
+              <LogoLoop
+                logos={logo}
+                speed={60}
+                direction="left"
+                logoHeight={200}
+                gap={50}
+                pauseOnHover
+                scaleOnHover
+                fadeOut
+                fadeOutColor="#ffffff"
+                ariaLabel="Technology partners"
+              />
+            </div>
+          )}
+        </section>
       </section>
 
       {/* CTA */}
