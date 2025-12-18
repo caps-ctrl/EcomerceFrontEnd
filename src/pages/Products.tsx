@@ -111,6 +111,7 @@ export default function Products() {
             Wyszukaj
           </Label>
           <Input
+           
             id="search"
             placeholder="Szukaj produktu…"
             value={query}

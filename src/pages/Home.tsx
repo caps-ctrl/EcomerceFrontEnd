@@ -8,7 +8,7 @@ import type { RootState } from "@/app/store/store";
 import { createSelector } from "@reduxjs/toolkit";
 import { LogoLoop } from "../components/LogoLoop";
 import { fetchProducts } from "@/features/products/productsSlice";
-
+import SplitText from "../components/SplitText";
 export default function Home() {
   const dispatch = useDispatch<AppDispatch>();
   const selectImportantProducts = createSelector(
@@ -29,18 +29,32 @@ export default function Home() {
     }
   }, [dispatch, status]);
 
+  const handleAnimationComplete = () => {
+    console.log("All letters have animated!");
+  };
+
   return (
-    <div className="min-h-screen flex flex-col caret-transparent dark:bg-stone-950">
+    <div className="min-h-screen flex flex-col caret-transparent ">
       {/* Hero Section */}
-      <section className=" dark:text-white">
-        <div className="container mx-auto px-6 py-20 text-center">
+      <section
+        className="relative text-white"
+        style={{
+          backgroundImage: "url('/heroPhoto.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        {/* Nakładka przyciemniająca */}
+        <div className="absolute inset-0 bg-black/60"></div>
+
+        <div className="relative container mx-auto px-6 py-20 text-center">
           <motion.h1
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="text-4xl md:text-6xl font-bold mb-4"
           >
-            Witamy w <span className="text-blue-500 ">Mini Shop</span>
+            Witamy w <span className="text-blue-400">Mini Shop</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -65,9 +79,22 @@ export default function Home() {
       <section className="container mx-auto px-6 ">
         {/*Important Products*/}
         <section>
-          <h2 className="text-3xl dark:text-white font-bold text-center mb-10">
-            Popularne produkty
-          </h2>
+          <div className="text-3xl py-15 dark:text-white font-bold text-center">
+            <SplitText
+              text="Popular Products"
+              className="text-4xl font-semibold text-center"
+              delay={100}
+              duration={0.6}
+              ease="power3.out"
+              splitType="chars"
+              from={{ opacity: 0, y: 40 }}
+              to={{ opacity: 1, y: 0 }}
+              threshold={0.1}
+              rootMargin="-100px"
+              textAlign="center"
+              onLetterAnimationComplete={handleAnimationComplete}
+            />
+          </div>
 
           {status === "loading" ? (
             <p>Loading Products...</p>
