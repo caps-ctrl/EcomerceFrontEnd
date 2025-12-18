@@ -3,6 +3,8 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import type { RootState } from "@/app/store/store";
 
+const apiUrl = import.meta.env.VITE_API_URL; // <-- zmienna środowiskowa
+
 // --- Typy ---
 interface Product {
   id: number;
@@ -36,7 +38,7 @@ export const fetchCart = createAsyncThunk<
   { state: RootState }
 >("cart/fetchCart", async (_, { getState }) => {
   const token = getState().auth.token;
-  const res = await axios.get("http://localhost:5000/api/cart", {
+  const res = await axios.get(`${apiUrl}/api/cart`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
@@ -49,7 +51,7 @@ export const addToCartBackend = createAsyncThunk<
 >("cart/addToCartBackend", async ({ productId, quantity }, { getState }) => {
   const token = getState().auth.token;
   const res = await axios.post(
-    "http://localhost:5000/api/cart/add",
+    `${apiUrl}/api/cart/add`,
     { productId, quantity },
     { headers: { Authorization: `Bearer ${token}` } }
   );
@@ -62,7 +64,7 @@ export const removeFromCartBackend = createAsyncThunk<
   { state: RootState }
 >("cart/removeFromCartBackend", async (productId, { getState }) => {
   const token = getState().auth.token;
-  await axios.delete(`http://localhost:5000/api/cart/${productId}`, {
+  await axios.delete(`${apiUrl}/api/cart/${productId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return productId;
@@ -77,7 +79,7 @@ export const decreaseQuantityBackend = createAsyncThunk<
   async ({ productId, quantity }, { getState }) => {
     const token = getState().auth.token;
     const res = await axios.post(
-      "http://localhost:5000/api/cart/decrease",
+      `${apiUrl}/api/cart/decrease`,
       { productId, quantity },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -94,7 +96,7 @@ export const increaseQuantityBackend = createAsyncThunk<
   async ({ productId, quantity }, { getState }) => {
     const token = getState().auth.token;
     const res = await axios.post(
-      "http://localhost:5000/api/cart/increase",
+      `${apiUrl}/api/cart/increase`,
       { productId, quantity },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -108,7 +110,7 @@ export const clearCartBackend = createAsyncThunk<
   { state: RootState }
 >("cart/clearCartBackend", async (_, { getState }) => {
   const token = getState().auth.token;
-  await axios.delete("http://localhost:5000/api/cart", {
+  await axios.delete(`${apiUrl}/api/cart`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 });

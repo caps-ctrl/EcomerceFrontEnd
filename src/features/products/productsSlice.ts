@@ -3,7 +3,7 @@ import {
   createSlice,
   type PayloadAction,
 } from "@reduxjs/toolkit";
-
+const apiUrl = import.meta.env.VITE_API_URL;
 export interface Product {
   id: number;
   name: string;
@@ -24,7 +24,7 @@ export interface ProductsState {
 export const fetchProducts = createAsyncThunk(
   "products/fetchProducts",
   async () => {
-    const response = await fetch("http://localhost:5000/api/products");
+    const response = await fetch(`${apiUrl}/api/products`);
     return await response.json();
   }
 );
